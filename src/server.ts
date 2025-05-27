@@ -6,7 +6,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:8080',
+    'https://pet-gotcha-garden.vercel.app'
+  ],
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
+}));
 
 const {
   GITHUB_CLIENT_ID,
@@ -27,7 +34,7 @@ app.get('/auth/github', (_req, res) => {
 app.get('/auth/github/callback', async (req, res) => {
   const code = req.query.code as string;
   try {
-    // 토큰 교환
+    // 1) 토큰 교환
     const tokenResp = await axios.post(
       'https://github.com/login/oauth/access_token',
       { client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code },
@@ -35,18 +42,19 @@ app.get('/auth/github/callback', async (req, res) => {
     );
     const accessToken = tokenResp.data.access_token;
 
-    // (선택) 유저 정보 조회
+    // 2) (선택) 유저 정보 조회
     const userResp = await axios.get('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const githubUser = userResp.data;
 
-    // 프론트엔드로 토큰·유저 정보 전달
-    const params = new URLSearchParams({ 
-      token: accessToken, 
-      login: githubUser.login 
+    // 3) 클라이언트로 리다이렉트 (여기에 추가)
+    const params = new URLSearchParams({
+      token: accessToken,
+      login: githubUser.login,
     }).toString();
     res.redirect(`${FRONTEND_URL}/?${params}`);
+
   } catch (err) {
     console.error(err);
     res.status(500).send('GitHub OAuth Error');
