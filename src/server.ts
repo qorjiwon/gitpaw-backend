@@ -5,6 +5,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const {
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
+  FRONTEND_URL = 'https://pet-gotcha-garden.vercel.app/',
+} = process.env;
+
 const app = express();
 app.use(cors({
   origin: [
@@ -15,11 +21,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type','Authorization']
 }));
 
-const {
-  GITHUB_CLIENT_ID,
-  GITHUB_CLIENT_SECRET,
-  FRONTEND_URL = 'https://pet-gotcha-garden.vercel.app/',
-} = process.env;
+// 헬스체크용 라우트
+app.get('/', (_req, res) => {
+  res.send('OK');
+});
 
 // 1) GitHub OAuth 페이지로 리다이렉트
 app.get('/auth/github', (_req, res) => {
